@@ -6,8 +6,8 @@ def knn(data, target, n):
         d = L2(x,target)
         if len(results) < n:
             results.append(x)
-        elif x < sorted(results)[len(results)-1]:
-            results[len(results)-1] = x
+        elif d < sorted(results, key=lambda x: x[1])[len(results)-1][1]:
+            results[len(results)-1] = (x, d)
 
     return results
 
