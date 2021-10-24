@@ -7,3 +7,4 @@ def L2(v1, v2):
         s += (v1[i] - v2[i]) ** 2
 
     return s ** 0.5
+
