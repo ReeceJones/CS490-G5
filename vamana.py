@@ -24,12 +24,19 @@ def medoid(df):
     distMatrix = pairwise_distances(df)
     return numpy.argmin(distMatrix.sum(axis=0))
 
-def VamanaAlgo(P, a, L, R):
-    G = {} #Must initialize G to an adjacency matrix where each point has R random out-neighbors
+def VamanaAlgo(P:pd.DataFrame, a:float, L, R):
+    G = {}
     s = medoid(P) 
     sigma = P.sample(frac=1)
+    #Initializing G to an adjacency matrix where each point has R random out-neighbors MUST OPTIMIZE
     for index in range(len(sigma)):
-        point = sigma[index]
+        point = sigma.iloc[index]
+        tuppoint = tuple(sigma.iloc[index])
+        npsig = sigma.drop(index=index, axis=0, inplace=False)
+        G[tuppoint] = set(tuple(i) for i in npsig.sample(n=R, axis=0).to_numpy())
+    
+    for index in range(len(sigma)):
+        point = tuple(sigma.iloc[index])
         L_, V = GreedySearch(s, point, 20, L) # must implement GreedySearch, this is placeholder
         RobustPrune.robustPrune(point, V, a, R)
         for j in G[point]:
@@ -38,3 +45,5 @@ def VamanaAlgo(P, a, L, R):
                 RobustPrune.robustPrune(j, z, a, R)
             else:
                 G[j] = z
+
+VamanaAlgo(df, 1, 10, 10)
