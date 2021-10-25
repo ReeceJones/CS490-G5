@@ -25,8 +25,8 @@ def medoid(df):
     return numpy.argmin(distMatrix.sum(axis=0))
 
 def VamanaAlgo(P, a, L, R):
-    G = {}
-    s = medoid(P)
+    G = {} #Must initialize G to an adjacency matrix where each point has R random out-neighbors
+    s = medoid(P) 
     sigma = P.sample(frac=1)
     for index in range(len(sigma)):
         point = sigma[index]
