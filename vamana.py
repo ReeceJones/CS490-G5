@@ -18,7 +18,19 @@ import RobustPrune
 df = parse_test.parse_to_df(r".\data\siftsmall\siftsmall_base.fvecs")
 
 def GreedySearch(s, x, k, L):
-    pass
+    A = {s}
+    B = set()
+
+    while len(A - B) > 0:
+        diff = list(A - B)
+        p_prime = diff[numpy.argmin(numpy.linalg.norm(numpy.array([y.get_data() for y in diff]) - x))[0]]
+        A.add(p_prime.get_neighbors())
+        B.add(p_prime)
+        if len(A) > L:
+            A = set(sorted(list(A), key=lambda y: numpy.linalg.norm(x - y))[:L])
+
+    return set(sorted(list(A), key=lambda y: numpy.linalg.norm(y - x))[:k]),B
+
 
 def medoid(df):
     distMatrix = pairwise_distances(df)
