@@ -15,21 +15,22 @@ import RobustPrune
 #Variable s denotes the medoid of the dataset P, which is the starting node for the algorithm
 #   Medoid - Point with the smallest average dissimilarity (distance?) with all other nodes in the graph.
 
-df = parse_test.parse_to_df(r".\data\siftsmall\siftsmall_base.fvecs")
+df = parse_test.parse_to_df('data/siftsmall/siftsmall_base.fvecs')
 
-def GreedySearch(s, x, k, L):
-    A = {s}
+def GreedySearch(s, x, k, L, G):
+    A = {tuple(s)}
     B = set()
 
     while len(A - B) > 0:
         diff = list(A - B)
-        p_prime = diff[numpy.argmin(numpy.linalg.norm(numpy.array([y.get_data() for y in diff]) - x))[0]]
-        A.add(p_prime.get_neighbors())
-        B.add(p_prime)
+        norms = [numpy.linalg.norm(numpy.array(y) - x) for y in diff]
+        p_prime = diff[numpy.argmin(norms)]
+        A = A.union(G[tuple(p_prime)])
+        B.add(tuple(p_prime))
         if len(A) > L:
-            A = set(sorted(list(A), key=lambda y: numpy.linalg.norm(x - y))[:L])
+            A = set(sorted(list(A), key=lambda y: numpy.linalg.norm(numpy.array(x) - numpy.array(y)))[:L])
 
-    return set(sorted(list(A), key=lambda y: numpy.linalg.norm(y - x))[:k]),B
+    return set(sorted(list(A), key=lambda y: numpy.linalg.norm(numpy.array(y) - numpy.array(x)))[:k]),B
 
 
 def medoid(df):
@@ -41,15 +42,17 @@ def VamanaAlgo(P:pd.DataFrame, a:float, L, R):
     s = medoid(P) 
     sigma = P.sample(frac=1)
     #Initializing G to an adjacency matrix where each point has R random out-neighbors MUST OPTIMIZE
+    print('building adjacency matrix')
     for index in range(len(sigma)):
         point = sigma.iloc[index]
         tuppoint = tuple(sigma.iloc[index])
         npsig = sigma.drop(index=index, axis=0, inplace=False)
         G[tuppoint] = set(tuple(i) for i in npsig.sample(n=R, axis=0).to_numpy())
-    
+    print('finished building adjacency matrix')
     for index in range(len(sigma)):
         point = tuple(sigma.iloc[index])
-        L_, V = GreedySearch(s, point, 20, L) # must implement GreedySearch, this is placeholder
+        L_, V = GreedySearch(sigma.iloc[s], point, 20, L, G) # must implement GreedySearch, this is placeholder
+        print(index)
         RobustPrune.robustPrune(point, V, a, R)
         for j in G[point]:
             z = G[j].union(point)
