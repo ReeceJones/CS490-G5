@@ -1,11 +1,9 @@
 import numpy
-from lib import dist
+from lib import parser
 from sklearn.metrics import pairwise_distances
 import parse_test
 import pandas as pd
 import RobustPrune
-#import greedysearch
-#import robustprune
 
 #Vamana constructs G in an iterative manner
 
@@ -77,5 +75,19 @@ def VamanaAlgo(P:pd.DataFrame, a:float, L, R):
                 G = LightRobustPrune(j, z, a, R, G)
             else:
                 G[j] = z
+    return sigma.iloc[s], G
 
-VamanaAlgo(df, 1, 10, 10)
+s, G = VamanaAlgo(df, 1, 10, 10)
+# test
+correct = 0
+total = 0
+print('Testing')
+with open('data/siftsmall/siftsmall_base.fvecs', 'rb') as f:
+    for vec in parser.read_vectors(f):
+        A, B = GreedySearch(s, vec, 20, 10, G)
+        C = sorted(list(A), key=lambda y: numpy.linalg.norm(numpy.array(y) - numpy.array(vec)))
+        if C[0]==vec:
+            correct += 1
+        total += 1
+
+print(f'Accuracy: {correct/total}')

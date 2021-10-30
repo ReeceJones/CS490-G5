@@ -7,6 +7,7 @@ def read_vectors(f, parser='fvec'):
     BLOCK_SIZE = 4096
     WORD_SIZE = 1 if parser=='bvec' else 4
     WORD_TYPE = parser[0]
+    f.seek(0)
     raw = f.read(BLOCK_SIZE)
     while len(raw) > 0:
         vec_size = struct.unpack('<i', raw[0:WORD_SIZE])[0]
