@@ -78,7 +78,7 @@ def dist(p1, p2):
     p1: a point in P
     p2: a point in P
     """
-    return np.linalg.norm(p1.data - p2.data)
+    return np.linalg.norm(p1.get_data() - p2.get_data())
 
 
 def robustPrune(p, V, alpha, R):
@@ -92,8 +92,8 @@ def robustPrune(p, V, alpha, R):
     Output
     G is modified by setting at most R new out-neighbors for p
     """
-    V = (V.union(p)) - p
-    p.neighbors = None
+    V = (V.union(p.get_neighbors())) - set([p])
+    p.set_neighbor({})
     p_star = None
 
     while len(V) != 0:
@@ -102,12 +102,12 @@ def robustPrune(p, V, alpha, R):
             if dist(p, p_prime) < distance:
                 p_star = p_prime
                 distance = dist(p, p_prime)
-        p.neighbors = p.neighbors.union(p_star)
-        if len(p.neighbors) == R:
+        p.add_neigbor(p_star)
+        if len(p.get_neighbors()) == R:
             break
         for p_prime in V:
             if alpha * dist(p_star, p_prime) <= dist(p, p_prime):
-                V = V - p_prime
+                V = V.remove(p_prime)
     return
 
 
