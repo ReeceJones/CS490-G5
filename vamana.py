@@ -1,5 +1,5 @@
 import numpy
-from lib import parser
+from lib import parser, fsgraph
 from sklearn.metrics import pairwise_distances
 import parse_test
 import pandas as pd
@@ -50,23 +50,35 @@ def medoid(df):
     return numpy.argmin(distMatrix.sum(axis=0))
 
 def VamanaAlgo(P:pd.DataFrame, a:float, L, R):
-    G = {}
     s = medoid(P) 
     sigma = P.sample(frac=1)
     lens = set()
+
+    # Create new FSGraph
+    G = fsgraph.FSGraph('test.fsg')
+    G.new(R,128,'fvec',len(sigma))
+
     #Initializing G to an adjacency matrix where each point has R random out-neighbors MUST OPTIMIZE
-    print('building adjacency matrix')
     for index in range(len(sigma)):
+        ### Old logic
+        """
         point = sigma.iloc[index]
         tuppoint = tuple(sigma.iloc[index])
         npsig = sigma.drop(index=index, axis=0, inplace=False)
         G[tuppoint] = set(tuple(i) for i in npsig.sample(n=R, axis=0).to_numpy())
         lens = lens.union({len(i) for i in G[tuppoint]})
+        """
+        ### New FSGraph Logic
+        point = tuple(sigma.iloc[index])
+        npsig = sigma.drop(index=index, axis=0, inplace=False)
+        G.set_data(index, point)
+        G.set_neighbors(index, set(i for i in npsig.sample(n=R, axis=0).index))
+
     print(f'Adjacency lens: {lens}')
     print('finished building adjacency matrix')
     for index in range(len(sigma)):
         point = tuple(sigma.iloc[index])
-        L_, V = GreedySearch(sigma.iloc[s], point, 20, L, G) # must implement GreedySearch, this is placeholder
+        L_, V = GreedySearch(sigma.iloc[s], point, 1, L, G) # must implement GreedySearch, this is placeholder
         print(index)
         G = LightRobustPrune(point, V, a, R, G)
         for j in G[point]:
@@ -77,14 +89,14 @@ def VamanaAlgo(P:pd.DataFrame, a:float, L, R):
                 G[j] = z
     return sigma.iloc[s], G
 
-s, G = VamanaAlgo(df, 1, 10, 10)
+s, G = VamanaAlgo(df, a=1, L=10, R=10)
 # test
 correct = 0
 total = 0
 print('Testing')
 with open('data/siftsmall/siftsmall_base.fvecs', 'rb') as f:
     for vec in parser.read_vectors(f):
-        A, B = GreedySearch(s, vec, 20, 10, G)
+        A, B = GreedySearch(s, vec, 1, 1, G)
         C = sorted(list(A), key=lambda y: numpy.linalg.norm(numpy.array(y) - numpy.array(vec)))
         if C[0]==vec:
             correct += 1

@@ -17,3 +17,13 @@ def read_vectors(f, parser='fvec'):
             raw = raw[WORD_SIZE + WORD_SIZE*vec_size:]
         raw = raw + f.read(BLOCK_SIZE)
 
+def read_vector(f, i, parser='fvec'):
+    """
+    Read a single vector based on its index in the vec file.
+    """
+    WORD_SIZE = 1 if parser=='bvec' else 4
+    WORD_TYPE = parser[0]
+    TUPLE_SIZE = 128
+    f.seek(i * TUPLE_SIZE * WORD_SIZE)
+    raw = f.read(TUPLE_SIZE * WORD_SIZE)
+    return struct.unpack(f'<{TUPLE_SIZE}{WORD_TYPE}', raw)
