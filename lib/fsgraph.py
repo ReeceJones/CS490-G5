@@ -50,7 +50,7 @@ class FSGraph:
                 self.index = [None for i in range(self.num_points)]
                 for i in range(self.num_points):
                     b = self.fd.read(self.R * 8)
-                    neighbors = {x for x in struct.unpack(f'<{self.R}Q', b) if x > 0}
+                    neighbors = {x for x in struct.unpack(f'<{self.R}q', b) if x > 0}
                     self.index[i]=neighbors
                 self.initialized = True
 
@@ -138,8 +138,8 @@ class FSGraph:
 
         # update disk-index
         self.fd.seek(START_INDEX)
-        ww = tuple(list(neighbors) + [-1] * (10-len(neighbors)))
-        self.fd.write(struct.pack(f'<{self.R}Q', *ww))
+        ww = list(neighbors) + [-1] * (self.R-len(neighbors))
+        self.fd.write(struct.pack(f'<{self.R}q', *ww[:self.R]))
 
         return True
 
