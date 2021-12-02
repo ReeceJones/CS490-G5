@@ -55,7 +55,7 @@ class FSGraph:
                 self.initialized = True
 
             if self.initialized:
-                self.fd = open(path, 'rb')
+                self.fd = open(path, 'wb+')
 
     def __del__(self):
         if self.initialized:
@@ -68,7 +68,9 @@ class FSGraph:
         """
         if self.initialized:
             self.fd.close()
-        self.fd = open(self.path, 'wb')
+        if os.path.exists(self.path):
+            os.remove(self.path)
+        self.fd = open(self.path, 'wb+')
         self.R = R
         self.tuple_size = tuple_size
         self.data_type = data_type[:4]
