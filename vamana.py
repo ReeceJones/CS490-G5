@@ -15,8 +15,6 @@ import random
 #Variable s denotes the medoid of the dataset P, which is the starting node for the algorithm
 #   Medoid - Point with the smallest average dissimilarity (distance?) with all other nodes in the graph.
 
-df = parse_test.parse_to_df('data/siftsmall/siftsmall_base.fvecs')
-
 def GreedySearch(s, x, k, L, G):
     A = set()
     A.add(s)
@@ -48,41 +46,51 @@ def LightRobustPrune(p, V, alpha, R, G):
                 V.remove(_V[i])
     return G
 
-def medoid(df):
-    distMatrix = pairwise_distances(df)
-    return numpy.argmin(distMatrix.sum(axis=0))
+def medoid(file, fast=False):
+    if fast:
+        distMatrix = pairwise_distances(parse_test.parse_to_df('data/siftsmall/siftsmall_base.fvecs'))
+        return numpy.argmin(distMatrix.sum(axis=0))
+    else:
+        with open(file, 'rb') as f1:
+            with open(file, 'rb') as f2:
+                mindist = 100000000000
+                minindex = 0
+                index = 0
+                for y in parser.read_vectors(f1):
+                    print(index)
+                    dist = 0
+                    for x in parser.read_vectors(f2):
+                        dist += np.linalg.norm(np.array(x)-y)
+                    if dist < mindist:
+                        mindist = dist
+                        minindex = index
+                    index += 1
+                return minindex
+        return None
 
-def VamanaAlgo(P, a:float, L, R):
-    s = medoid(P) 
-    np.random.shuffle(P)
+def VamanaAlgo(a:float, L, R, N, file):
+    s = medoid(file)
     lens = set()
-    sigma = P
 
     # Create new FSGraph
     G = fsgraph.FSGraph('test.fsg')
-    G.new(R,128,'fvec',len(sigma))
+    G.new(R,128,'fvec',N)
 
     #Initializing G to an adjacency matrix where each point has R random out-neighbors MUST OPTIMIZE
-    for index in range(len(sigma)):
-        ### Old logic
-        """
-        point = sigma.iloc[index]
-        tuppoint = tuple(sigma.iloc[index])
-        npsig = sigma.drop(index=index, axis=0, inplace=False)
-        G[tuppoint] = set(tuple(i) for i in npsig.sample(n=R, axis=0).to_numpy())
-        lens = lens.union({len(i) for i in G[tuppoint]})
-        """
-        ### New FSGraph Logic
-        point = tuple(sigma[index])
-        npsig = list(range(len(sigma)))
-        npsig.pop(index)
-        G.set_data(index, point)
-        G.set_neighbors(index, set(i for i in random.sample(npsig, R)))
+    with open('data/siftsmall/siftsmall_base.fvecs', 'rb') as f:
+        index = 0
+        for point in parser.read_vectors(f):
+            ### New FSGraph Logic
+            npsig = list(range(N))
+            npsig.pop(index)
+            G.set_data(index, point)
+            G.set_neighbors(index, set(i for i in random.sample(npsig, R)))
+            index = index + 1
 
     print(f'Adjacency lens: {lens}')
     print('finished building adjacency matrix')
-    for index in range(len(sigma)):
-        point = tuple(sigma[index])
+    for index in range(N):
+        point = G.get_data(index)
         L_, V = GreedySearch(s, point, 1, L, G)
         print(index)
         G = LightRobustPrune(index, V, a, R, G)
@@ -94,7 +102,7 @@ def VamanaAlgo(P, a:float, L, R):
                 G[j] = z
     return s, G
 
-s, G = VamanaAlgo(df, a=1, L=1, R=1)
+s, G = VamanaAlgo(a=1, L=1, R=1, N=10000, file='data/siftsmall/siftsmall_base.fvecs')
 
 # test
 correct = 0
